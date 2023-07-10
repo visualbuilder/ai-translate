@@ -40,8 +40,10 @@ class InstallCommand extends Command
                 $this->info('Overwriting configuration files...');
                 $this->publishConfiguration($force = true);
             }
+            
             else {
                 $this->info('Existing configuration was not overwritten');
+                return Command::FAILURE;
             }
         }
         
