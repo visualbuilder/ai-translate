@@ -25,6 +25,9 @@ class TranslateStrings extends Command
      * @var string
      */
     protected $description = "Translates all language files in these directories: ";
+    
+    protected $files;
+    
     protected $model = "";
     protected $maxInputStringLength = 2000;
     protected $maxRetries = 5;
@@ -37,17 +40,6 @@ class TranslateStrings extends Command
     public function __construct()
     {
         parent::__construct();
-
-        $dirs = [
-            'source_directories' => [
-                'lang',
-                'resources/lang',
-            ],
-        ];
-
-        $dirString = implode("\n", $dirs[ 'source_directories' ]);
-
-        $this->signature = $dirString;
         $this->setDescription(
             (string) "Translates all PHP & JSON language files in these directories: \n\n\t- ".implode(
                 "\n\t- ",
@@ -67,8 +59,7 @@ class TranslateStrings extends Command
     public function handle()
     {
         $this->init();
-        $files = $this->findSourceFiles();
-        $this->translateFiles($files);
+        $this->translateFiles();
 
         return Command::SUCCESS;
     }
@@ -77,21 +68,25 @@ class TranslateStrings extends Command
     {
         $this->sourceLocale = config('ai-translate.source-locale');
         $this->overwrite = (bool) $this->option('force');
+        $this->findSourceFiles();
+        $this->estimateCostAndSelectModel();
     }
-
+    
+    /**
+     * Seek all the php array and json translatables
+     * @return array
+     */
     private function findSourceFiles()
     {
         $jsonFiles = FileHelper::getJsonSourceFileList($this->sourceLocale);
         $phpFiles = FileHelper::getLanguageFileList($this->sourceLocale);
 
-        return array_merge($jsonFiles, $phpFiles);
+        $this->files = array_merge($jsonFiles, $phpFiles);
     }
 
-    private function translateFiles($files)
+    private function translateFiles()
     {
-        $this->estimateCostAndSelectModel($files);
-
-        foreach ($files as $sourceFile) {
+        foreach ($this->files as $sourceFile) {
             $this->sourceData = $this->readLanguageFile($sourceFile);
             $chunks = $this->chunkArray($this->sourceData);
             foreach (config('ai-translate.target_locales') as $targetLocale => $targetLanguage) {
@@ -116,12 +111,12 @@ class TranslateStrings extends Command
      *
      * @return true
      */
-    private function estimateCostAndSelectModel($files)
+    private function estimateCostAndSelectModel()
     {
         $targetLanguages = config('ai-translate.target_locales');
         $targetCount = count($targetLanguages);
 
-        $this->info("Found ".count($files)." files to translate into $targetCount languages");
+        $this->info("Found ".count($this->files)." files to translate into $targetCount languages");
 
         $stats = [];
         $totalItems = 0;
@@ -130,7 +125,7 @@ class TranslateStrings extends Command
         $targetTokensTotal = 0;
         $totalTokens = 0;
 
-        foreach ($files as $file) {
+        foreach ($this->files as $file) {
             $lengths = FileHelper::countItemsAndStringLengths($file);
             $sourceTokens = OpenAiHelper::estimateTokens($lengths[ 'totalLength' ]);
             $stats[] = [
@@ -249,34 +244,39 @@ class TranslateStrings extends Command
         $chunks = [];
         $chunk = [];
         $length = 0;
-
+        $lineCount = 0;
+        
         // Flatten the array using Laravel's helper function
         $flattenedArray = Arr::dot($array);
-
+        
         foreach ($flattenedArray as $key => $value) {
             // If the value is an empty array, skip to the next iteration
             if(is_array($value) && empty($value)) {
                 continue;
             }
-
+            
             $itemLength = strlen($value);
-            if($length + $itemLength > $this->maxInputStringLength && ! empty($chunk)) {
-                // If adding this item will exceed the max length, save the current chunk and start a new one
+            if(($length + $itemLength > $this->maxInputStringLength || $lineCount == config('ai-translate.max_lines_per_request')) &&
+               !empty($chunk)) {
+                // If adding this item will exceed the max length or max lines, save the current chunk and start a new one
                 $chunks[] = $chunk;
                 $chunk = [];
                 $length = 0;
+                $lineCount = 0;
             }
             $chunk[ $key ] = $value;
             $length += $itemLength;
+            $lineCount++;
         }
-        if(! empty($chunk)) {
+        if(!empty($chunk)) {
             // Add the last chunk if it's not empty
             $chunks[] = $chunk;
         }
-
+        
         return $chunks;
     }
-
+    
+    
     /**
      * Create the target file and process the input chunked array
      *
@@ -297,7 +297,14 @@ class TranslateStrings extends Command
             }
         }
     }
-
+    
+    /**
+     * Setup the target file
+     * @param $file
+     * @param $locale
+     *
+     * @return array|false|string|string[]
+     */
     public function createCheckOrEmptyTargetFile($file, $locale)
     {
         // Replace source locale with target locale in the path
@@ -368,8 +375,8 @@ class TranslateStrings extends Command
         $complete = false;
         while ($retryCount < $this->maxRetries && ! $complete) {
             try {
-                $translatedChunk =
-                    OpenAiHelper::translateChunk($this, $chunk, $this->sourceLocale, $targetLanguage, $this->model);
+                $translatedChunk = OpenAiHelper::translateChunk($this, $chunk, $this->sourceLocale, $targetLanguage,
+                                                                $this->model);
                 $this->appendResponse($targetFile, $translatedChunk[ 'translatedChunk' ]);
                 $complete = true;
             } catch (\Exception $e) {
@@ -381,6 +388,9 @@ class TranslateStrings extends Command
 
     public function appendResponse($filename, $translatedChunk)
     {
+        if(!count($translatedChunk)){
+            return;
+        }
         // Fetch existing content
         $existingContent = $this->readLanguageFile($filename);
 

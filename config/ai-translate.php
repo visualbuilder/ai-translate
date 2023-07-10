@@ -21,15 +21,6 @@ return [
         'resources/lang/vendor/ekoukltd/laraconsent'
     ],
     
-    //Pricing data from here: https://openai.com/pricing#language-models
-    //Prices are per 1000 tokens (approx 4000 words)
-    'ai-models' => [
-        'gpt-3.5-turbo'     => ['max_tokens' => 4096, 'input_price' => 0.0015, 'output_price' => 0.002],
-        'gpt-3.5-turbo-16k' => ['max_tokens' => 16384, 'input_price' => 0.003, 'output_price' => 0.004],
-        'gpt-4'             => ['max_tokens' => 8192, 'input_price' => 0.03, 'output_price' => 0.06],
-        'gpt-4-32k'         => ['max_tokens' => 32768, 'input_price' => 0.06, 'output_price' => 0.12],
-    ],
-    
     'target_locales' => [
         'ar'    => 'Arabic',
         'de'    => 'German',
@@ -39,6 +30,23 @@ return [
         'fr'    => 'French',
         'uk'    => 'Ukrainian',
     ],
+    
+    //Pricing data from here: https://openai.com/pricing#language-models
+    //Prices are per 1000 tokens (approx 4000 words)
+    'ai-models' => [
+        'gpt-3.5-turbo'     => ['max_tokens' => 4096, 'input_price' => 0.0015, 'output_price' => 0.002],
+        'gpt-3.5-turbo-16k' => ['max_tokens' => 16384, 'input_price' => 0.003, 'output_price' => 0.004],
+        'gpt-4'             => ['max_tokens' => 8192, 'input_price' => 0.03, 'output_price' => 0.06],
+        'gpt-4-32k'         => ['max_tokens' => 32768, 'input_price' => 0.06, 'output_price' => 0.12],
+    ],
+    
+    //Records will be chunked to reduce the number of API requests.
+    //We will not submit more than 1/3 of max_tokens per request to allow for longer translation responses like German.
+    //If a chunk of a file fails, it will be omitted from the result.
+    //If you hit a persistent issue then reduce this number to allow more lines to be translated and help find the
+    // problematic string. You may also prefer to monitor fewer at a time.
+    // If your translations are lots of short strings, this number could be much higher.
+    'max_lines_per_request' => 40,
     
     //Copy any required from here to target_locales above to enable translation of those longuages.
     'known_locales' => [

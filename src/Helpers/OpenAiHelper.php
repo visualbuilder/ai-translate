@@ -6,6 +6,36 @@ use OpenAI\Laravel\Facades\OpenAI;
 
 class OpenAiHelper
 {
+    /**
+     * Replace tokens with *** and save the original values
+     * Format the submitted lines with line numbers
+     *
+     * Do the translation...
+     *
+     * Restore the attribute tokens, remove the line numbers and match up with the original strings.
+     *
+     * If any are missing the original string will be used instead. Actually - may be better to exclude from the
+     * destination, then it will be able to have another go later.
+     *
+     * Missing strings will be merged when not overwriting.
+     *
+     *TODO Split this function up and save errors to include an error report at the end.  Pain to have to scroll back
+     * through the history to find them
+     *
+     * TODO Capture the before and after to an array so each chunked result can be tablulated as we go in the console.
+     *
+     * TODO Right to Left Arabic sometimes switches the attribute colon to the end of the string not the start.
+     * Need to resolve.
+     *
+     * @param $command
+     * @param $chunk
+     * @param $sourceLocale
+     * @param $targetLanguage
+     * @param $model
+     *
+     * @return array
+     */
+    
     public static function translateChunk($command, $chunk, $sourceLocale, $targetLanguage, $model)
     {
         // Combine all the strings in the chunk into one prompt with line numbers
@@ -79,7 +109,8 @@ class OpenAiHelper
                 return array_shift($placeholders); // Replace *** back with the placeholders
             }, $line);
         }, $translatedStrings);
-
+        
+        $translatedChunk = [];
         // Combine the original keys with the translated strings
         if (count(array_keys($chunk)) === count($translatedStrings)) {
             $translatedChunk = array_combine(array_keys($chunk), $translatedStrings);
@@ -89,10 +120,10 @@ class OpenAiHelper
             $command->newLine();
 
             // assign untranslated lines to their original value.
-            $translatedChunk = [];
-            foreach (array_keys($chunk) as $i => $key) {
-                $translatedChunk[$key] = $translatedStrings[$i] ?? $chunk[$key];
-            }
+            // Actually this is not useful.  Better not to exist
+//            foreach (array_keys($chunk) as $i => $key) {
+//                $translatedChunk[$key] = $translatedStrings[$i] ?? $chunk[$key];
+//            }
         }
 
         if($placeholdersUsed > 0) {
@@ -100,23 +131,25 @@ class OpenAiHelper
             self::displayArrayInNumberedLines(array_values($translatedChunk), $command);
         }
 
-        // Extract the 'usage' from the response
-        $usage = $response->usage;
-
         // Return both the translated chunk and the usage
         return [
             'translatedChunk' => $translatedChunk,
-            'usage' => $usage,
+            'usage' => $response->usage,
         ];
     }
 
+    public static function addLineNumbersToArrayofStrings($lines)
+    {
+        return array_map(function ($k, $v) { return ($k + 1) . ". {$v}"; }, array_keys($lines), $lines);
+    }
     public static function displayArrayInNumberedLines($lines, $command)
     {
         // Add line numbers to each string
-        $lines = array_map(function ($k, $v) { return ($k + 1) . ". {$v}"; }, array_keys($lines), $lines);
+        $lines = self::addLineNumbersToArrayofStrings($lines);
         $command->info(implode("\n", $lines));
         $command->newLine();
     }
+
 
     public static function translateString($string, $target_lang): string
     {
