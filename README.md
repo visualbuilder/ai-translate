@@ -4,13 +4,15 @@
 [![Total Downloads](https://img.shields.io/packagist/dt/visualbuilder/ai-translate.svg?style=flat-square)](https://packagist.org/packages/visualbuilder/ai-translate)
 ![GitHub Actions](https://github.com/visualbuilder/ai-translate/actions/workflows/main.yml/badge.svg)
 
-![Example](./screenshot.png)
+![Example](./media/translationBanner.png)
 
  - Just set a list of languages that you would like your site translating to and leave it to GPT.
  - Can use GPT-3.5-turbo or GPT-4
  - Estimates cost before running
  - More accurate than Google Translate
  - Handles variables in the translation string - they will not be translated.
+ - Handles both PHP and JSON files
+ - Model translations coming soon
 
 ## Installation
 
@@ -42,19 +44,6 @@ Copy from the list of known_locales the languages you wish to translate into the
 Currently handles `.json` and `.php` translation files.
 Attribute tokens should remain unchanged.  This was a challenge as GPT-3.5 refused to ignore :attribute and always translated it even when told explicity to ignore it.
 To solve this all tokens are replaced with *** before translation and added back in after translation ensuring continuity.
-
-I have always wondered though with things like:-
-
-`The :attribute is required`
-
-How this can be translated in languages with masculine and feminine such as French.  
-
-
- - **the password** = le mot de passe 
- - **the checkbox** = la case à cocher
- - **the terms and conditions** = Les termes et conditions
-
-We have 3 different versions of the. Suspect it's one of those unsolveable problems.
 
 To run the script:-
 
