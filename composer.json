@@ -17,7 +17,7 @@
     ],
     "require": {
         "php": "^8.0",
-        "laravel/framework": "^9.46.0|^10.14.1",
+        "laravel/framework": "^10.14.1",
         "openai-php/laravel": "*",
         "symfony/var-exporter": "*"
     },
