@@ -37,7 +37,26 @@ OPENAI_ORGANIZATION=org-xxxxxx
 
 ## Usage
 Check the config file to make sure you have included the required source locale directories.
-Copy from the list of known_locales the languages you wish to translate into the target_locales array
+Copy from the list of known_locales the languages you wish to translate into the target_locales array.
+
+Currently handles `.json` and `.php` translation files.
+Attribute tokens should remain unchanged.  This was a challenge as GPT-3.5 refused to ignore :attribute and always translated it even when told explicity to ignore it.
+To solve this all tokens are replaced with *** before translation and added back in after translation ensuring continuity.
+
+I have always wondered though with things like:-
+
+`The :attribute is required`
+
+How this can be translated in languages with masculine and feminine such as French.  
+
+
+ - **the password** = le mot de passe 
+ - **the checkbox** = la case à cocher
+ - **the terms and conditions** = Les termes et conditions
+
+We have 3 different versions of the. Suspect it's one of those unsolveable problems.
+
+To run the script:-
 
 ```bash
 php artisan vb:ai:translate
