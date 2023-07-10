@@ -2,7 +2,8 @@
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/visualbuilder/ai-translate.svg?style=flat-square)](https://packagist.org/packages/visualbuilder/ai-translate)
 [![Total Downloads](https://img.shields.io/packagist/dt/visualbuilder/ai-translate.svg?style=flat-square)](https://packagist.org/packages/visualbuilder/ai-translate)
-![GitHub Actions](https://github.com/visualbuilder/ai-translate/actions/workflows/main.yml/badge.svg)
+[![run-tests](https://github.com/visualbuilder/ai-translate/actions/workflows/run-tests.yml/badge.svg)](https://github.com/visualbuilder/ai-translate/actions/workflows/run-tests.yml)
+[![Check & fix styling](https://github.com/visualbuilder/ai-translate/actions/workflows/php-cs-fixer.yml/badge.svg)](https://github.com/visualbuilder/ai-translate/actions/workflows/php-cs-fixer.yml)
 
 ![Example](./media/translationBanner.png)
 
