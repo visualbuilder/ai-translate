@@ -25,9 +25,9 @@ class TranslateStrings extends Command
      * @var string
      */
     protected $description = "Translates all language files in these directories: ";
-    
+
     protected $files;
-    
+
     protected $model = "";
     protected $maxInputStringLength = 2000;
     protected $maxRetries = 5;
@@ -71,7 +71,7 @@ class TranslateStrings extends Command
         $this->findSourceFiles();
         $this->estimateCostAndSelectModel();
     }
-    
+
     /**
      * Seek all the php array and json translatables
      * @return array
@@ -245,19 +245,19 @@ class TranslateStrings extends Command
         $chunk = [];
         $length = 0;
         $lineCount = 0;
-        
+
         // Flatten the array using Laravel's helper function
         $flattenedArray = Arr::dot($array);
-        
+
         foreach ($flattenedArray as $key => $value) {
             // If the value is an empty array, skip to the next iteration
             if(is_array($value) && empty($value)) {
                 continue;
             }
-            
+
             $itemLength = strlen($value);
             if(($length + $itemLength > $this->maxInputStringLength || $lineCount == config('ai-translate.max_lines_per_request')) &&
-               !empty($chunk)) {
+               ! empty($chunk)) {
                 // If adding this item will exceed the max length or max lines, save the current chunk and start a new one
                 $chunks[] = $chunk;
                 $chunk = [];
@@ -268,15 +268,14 @@ class TranslateStrings extends Command
             $length += $itemLength;
             $lineCount++;
         }
-        if(!empty($chunk)) {
+        if(! empty($chunk)) {
             // Add the last chunk if it's not empty
             $chunks[] = $chunk;
         }
-        
+
         return $chunks;
     }
-    
-    
+
     /**
      * Create the target file and process the input chunked array
      *
@@ -297,7 +296,7 @@ class TranslateStrings extends Command
             }
         }
     }
-    
+
     /**
      * Setup the target file
      * @param $file
@@ -375,8 +374,13 @@ class TranslateStrings extends Command
         $complete = false;
         while ($retryCount < $this->maxRetries && ! $complete) {
             try {
-                $translatedChunk = OpenAiHelper::translateChunk($this, $chunk, $this->sourceLocale, $targetLanguage,
-                                                                $this->model);
+                $translatedChunk = OpenAiHelper::translateChunk(
+                    $this,
+                    $chunk,
+                    $this->sourceLocale,
+                    $targetLanguage,
+                    $this->model
+                );
                 $this->appendResponse($targetFile, $translatedChunk[ 'translatedChunk' ]);
                 $complete = true;
             } catch (\Exception $e) {
@@ -388,7 +392,7 @@ class TranslateStrings extends Command
 
     public function appendResponse($filename, $translatedChunk)
     {
-        if(!count($translatedChunk)){
+        if(! count($translatedChunk)) {
             return;
         }
         // Fetch existing content

@@ -35,7 +35,6 @@ class OpenAiHelper
      *
      * @return array
      */
-    
     public static function translateChunk($command, $chunk, $sourceLocale, $targetLanguage, $model)
     {
         // Combine all the strings in the chunk into one prompt with line numbers
@@ -109,7 +108,7 @@ class OpenAiHelper
                 return array_shift($placeholders); // Replace *** back with the placeholders
             }, $line);
         }, $translatedStrings);
-        
+
         $translatedChunk = [];
         // Combine the original keys with the translated strings
         if (count(array_keys($chunk)) === count($translatedStrings)) {
@@ -121,9 +120,9 @@ class OpenAiHelper
 
             // assign untranslated lines to their original value.
             // Actually this is not useful.  Better not to exist
-//            foreach (array_keys($chunk) as $i => $key) {
-//                $translatedChunk[$key] = $translatedStrings[$i] ?? $chunk[$key];
-//            }
+            //            foreach (array_keys($chunk) as $i => $key) {
+            //                $translatedChunk[$key] = $translatedStrings[$i] ?? $chunk[$key];
+            //            }
         }
 
         if($placeholdersUsed > 0) {
@@ -142,6 +141,7 @@ class OpenAiHelper
     {
         return array_map(function ($k, $v) { return ($k + 1) . ". {$v}"; }, array_keys($lines), $lines);
     }
+
     public static function displayArrayInNumberedLines($lines, $command)
     {
         // Add line numbers to each string
@@ -149,7 +149,6 @@ class OpenAiHelper
         $command->info(implode("\n", $lines));
         $command->newLine();
     }
-
 
     public static function translateString($string, $target_lang): string
     {
