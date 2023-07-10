@@ -36,26 +36,45 @@ class TranslateStrings extends Command
     protected $maxRetries = 5;
     protected $totalPromptTokens = 0;
     protected  $totalCompletionTokens = 0;
+    
+    protected $overwrite = false;
     /**
      * Execute the console command.
      *
      * @return int
      */
     public function handle() {
-        $this->sourceLocale = config('ai-translate.source-locale');
-        $files = FileHelper::getLanguageFileList($this->sourceLocale);
-        $this->model = $this->estimateCostAndSelectModel($files);
-        $this->setMaxInputStringLength();
-        $overwrite = (bool) $this->option('force');
         
-        $this->info(" Translating with ".$this->model.". Max input length: ".$this->maxInputStringLength);
+        $this->init();
+        $files = $this->findSourceFiles();
+        $this->translateFiles($files);
+        return Command::SUCCESS;
+    }
+    
+    private function init()
+    {
+        $this->sourceLocale = config('ai-translate.source-locale');
+        $this->overwrite = (bool) $this->option('force');
+    }
+    
+    
+    private function findSourceFiles()
+    {
+        $jsonFiles = FileHelper::getJsonSourceFileList($this->sourceLocale);
+        $phpFiles = FileHelper::getLanguageFileList($this->sourceLocale);
+        return array_merge($jsonFiles,$phpFiles);
+    }
+    
+    private function translateFiles($files)
+    {
+       
+        $this->estimateCostAndSelectModel($files);
         
         foreach ($files as $sourceFile) {
             $this->sourceData = $this->readLanguageFile($sourceFile);
             $chunks = $this->chunkArray($this->sourceData);
-            
             foreach (config('ai-translate.target_locales') as $targetLocale => $targetLanguage) {
-                $this->handleTargetLocale($sourceFile, $chunks, $targetLocale, $targetLanguage, $overwrite);
+                $this->handleTargetLocale($sourceFile, $chunks, $targetLocale, $targetLanguage);
             }
         }
         
@@ -63,8 +82,6 @@ class TranslateStrings extends Command
         $this->info("Total prompt tokens used: ".$this->totalPromptTokens);
         $this->info("Total completion tokens used: ".$this->totalCompletionTokens);
         $this->warn("Total Cost: $".$this->getCost());
-        
-        return Command::SUCCESS;
     }
     
     /**
@@ -85,13 +102,12 @@ class TranslateStrings extends Command
      * @param $chunks
      * @param $targetLocale
      * @param $targetLanguage
-     * @param $overwrite
      *
      * @return void
      */
-    private function handleTargetLocale($file, $chunks, $targetLocale, $targetLanguage, $overwrite) {
-        if ($targetFile = $this->createCheckOrEmptyTargetFile($file, $targetLocale, $overwrite)) {
-            $this->handleExistingTargetFile($targetFile, $chunks, $overwrite);
+    private function handleTargetLocale($file, $chunks, $targetLocale, $targetLanguage) {
+        if ($targetFile = $this->createCheckOrEmptyTargetFile($file, $targetLocale)) {
+            $this->handleExistingTargetFile($targetFile, $chunks);
             
             foreach ($chunks as $chunk) {
                 $this->processChunk($targetFile, $chunk, $targetLanguage);
@@ -103,13 +119,12 @@ class TranslateStrings extends Command
      * If the file contains records - diff with the source to only translate new strings.
      * @param $targetFile
      * @param $chunks
-     * @param $overwrite
      *
      * @return void
      */
-    private function handleExistingTargetFile($targetFile, &$chunks, $overwrite) {
+    private function handleExistingTargetFile($targetFile, &$chunks) {
         $targetArray = $this->readLanguageFile($targetFile);
-        if (count($targetArray) !== 0 && !$overwrite) {
+        if (count($targetArray) !== 0 && !$this->overwrite) {
             $diffArray = array_diff_key($this->sourceData, $targetArray);
             $chunks = $this->chunkArray($diffArray);
         }
@@ -164,9 +179,12 @@ class TranslateStrings extends Command
     /**
      * Parse the input files and estimate the cost of translation
      * Ask the user which model they would like to use if they have not specified
+     *
+     * Set the model and the maximum input string length for the model
+     * @param $files
      * @param $files
      *
-     * @return false|int|mixed|string
+     * @return true
      */
     private function estimateCostAndSelectModel($files) {
         $targetLanguages = config('ai-translate.target_locales');
@@ -243,8 +261,9 @@ class TranslateStrings extends Command
         }
         
         $this->info("Going to translate using $model");
-        
-        return $model;
+        $this->model = $model;
+        $this->setMaxInputStringLength();
+        return true;
     }
     
     /**
@@ -254,8 +273,18 @@ class TranslateStrings extends Command
      * @return mixed
      */
     public function readLanguageFile($file) {
-        return include($file);
+        if(!file_exists($file)){
+            return [];
+        }
+        switch (FileHelper::getExtention($file)){
+            case('php'):
+                return include($file);
+            case('json'):
+                return json_decode(file_get_contents($file), true);
+        }
     }
+    
+    
     
     /**
      * Splits a file into chunks of a given length
@@ -296,13 +325,22 @@ class TranslateStrings extends Command
         
         return $chunks;
     }
-    
-    public function createCheckOrEmptyTargetFile($file, $locale,  $overwrite = false) {
+
+    public function createCheckOrEmptyTargetFile($file, $locale) {
         // Replace source locale with target locale in the path
-        $newFile = str_replace('/'.$this->sourceLocale.'/', '/'.$locale.'/', $file);
+        switch(FileHelper::getExtention($file)){
+            case('php'):
+                //php files are in their own locale dir
+                $newFile = str_replace('/'.$this->sourceLocale.'/', '/'.$locale.'/', $file);
+                break;
+            case('json'):
+                //Json files are in the same dir
+                $newFile = str_replace($this->sourceLocale.'.json', $locale.'.json', $file);
+        }
+        
         
         // If overwrite is false and file already exists, make sure it contains an array
-        if(!$overwrite && file_exists($newFile)) {
+        if(!$this->overwrite && file_exists($newFile)) {
             return is_array($this->readLanguageFile($newFile))?$newFile:false;
         }
         
@@ -312,28 +350,36 @@ class TranslateStrings extends Command
             mkdir($directory, 0755, true);
         }
         
-        // Initialize the file with return [];
-        $comment = "/**\n * Auto Translated by visualbuilder/ai-translate on " . date("d/m/Y") . "\n */";
-        file_put_contents($newFile, "<?php\n\n" . $comment . "\n\nreturn [\n\n];\n");
-
+        switch(FileHelper::getExtention($file)){
+            case('php'):
+                $comment = "/**\n * Auto Translated by visualbuilder/ai-translate on " . date("d/m/Y") . "\n */";
+                file_put_contents($newFile, "<?php\n\n" . $comment . "\n\nreturn [\n\n];\n");
+                break;
+            case('json'):
+                file_put_contents($newFile, "{}");
+        }
+        
         return $newFile;
     }
     
     public function appendResponse($filename, $translatedChunk) {
         // Fetch existing content
-        $existingContent = file_exists($filename) ? include($filename) : [];
+        $existingContent = $this->readLanguageFile($filename);
         
         // Undot the translated chunk
         $undottedTranslatedChunk = Arr::undot($translatedChunk);
         
         // Merge new translations with existing content
         $newContent = array_merge($existingContent, $undottedTranslatedChunk);
-        
-        // Format as a PHP return statement
-        //var_export uses the old array () notation. Bit lame.
-//        $output = "<?php\n\nreturn " . var_export($newContent, true) . ";\n";
+
         $comment = "/**\n * Auto Translated by visualbuilder/ai-translate on " . date("d/m/Y") . "\n */";
-        $output = "<?php\n\n" . $comment . "\nreturn ".VarExporter::export($newContent).";\n";
+        
+        switch (FileHelper::getExtention($filename)){
+            case('php'):
+                $output = "<?php\n\n" . $comment . "\nreturn ".VarExporter::export($newContent).";\n";
+            case('json'):
+                $output = json_encode($newContent, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        }
         // Write to the file
         file_put_contents($filename, $output);
     }

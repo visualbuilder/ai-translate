@@ -14,10 +14,14 @@ return [
     //But do not include it here. These are the parent directories.
     'source_directories' => [
         'lang',
-        'vendor/visualbuilder/email-templates/resources/lang'
+        //Developers can point to their packages to have them translated
+        //Either in vendor or where ever they happen to be
+        'vendor/visualbuilder/email-templates/resources/lang',
+        'resources/lang/vendor/ekoukltd/laraconsent'
     ],
     
     //Pricing data from here: https://openai.com/pricing#language-models
+    //Prices are per 1000 tokens (approx 4000 words)
     'ai-models' => [
         'gpt-3.5-turbo'     => ['max_tokens' => 4096, 'input_price' => 0.0015, 'output_price' => 0.002],
         'gpt-3.5-turbo-16k' => ['max_tokens' => 16384, 'input_price' => 0.003, 'output_price' => 0.004],
@@ -35,7 +39,7 @@ return [
         'uk'    => 'Ukrainian',
     ],
     
-    //Copy anything from here to target_locales above to enable translation of those longuages.
+    //Copy any required from here to target_locales above to enable translation of those longuages.
     'known_locales' => [
         'af'    => 'Afrikaans',
         'ar'    => 'Arabic',

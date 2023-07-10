@@ -5,6 +5,21 @@ namespace Visualbuilder\AiTranslate\Helpers;
 class FileHelper
 {
     
+    public static function getJsonSourceFileList($sourceLocale){
+        $directories = config('ai-translate.source_directories');
+        $sourceFile = "$sourceLocale.json";
+        $filenamesArray = [];
+        
+        foreach ($directories as $directory) {
+            if(file_exists($directory)) {
+                $filenamesArray = array_merge($filenamesArray, self::getFiles($directory, $directory,$sourceFile));
+            }
+        }
+        
+        return array_combine($filenamesArray, $filenamesArray);
+        
+    }
+    
     public static function getLanguageFileList($sourceLocale)
     {
         $directories = config('ai-translate.source_directories');
@@ -14,7 +29,7 @@ class FileHelper
         foreach ($directories as $directory) {
             $directory = $directory.'/'.$sourceLocale;
             if(file_exists($directory)) {
-                $filenamesArray = array_merge($filenamesArray, self::getFiles($directory, $directory));
+                $filenamesArray = array_merge($filenamesArray, self::getFiles($directory, $directory,'php'));
             }
         }
         
@@ -23,8 +38,15 @@ class FileHelper
     
     /**
      * Recursively get all files in a directory and children
+     * Optionally provide a filetype such as php or a specific filename
+     *
+     * @param $dir
+     * @param $basepath
+     * @param $fileType
+     *
+     * @return array
      */
-    private static function getFiles($dir, $basepath)
+    private static function getFiles($dir, $basepath, $fileType = '*')
     {
         $files = $subdirs = $subFiles = [];
         
@@ -40,22 +62,49 @@ class FileHelper
                 if(is_dir($entryPath)) {
                     $subdirs[] = $entryPath;
                 } else {
-                    $subFiles[] = $entryPath;
+                    if ($fileType == '*') {
+                        $subFiles[] = $entryPath;
+                    } else if (strpos($fileType, '.') === false) {
+                        // fileType is assumed to be an extension
+                        $fileExtension = pathinfo($entryPath, PATHINFO_EXTENSION);
+                        if($fileExtension == $fileType) {
+                            $subFiles[] = $entryPath;
+                        }
+                    } else {
+                        // fileType is assumed to be a filename
+                        $filename = pathinfo($entryPath, PATHINFO_BASENAME);
+                        if ($filename == $fileType) {
+                            $subFiles[] = $entryPath;
+                        }
+                    }
                 }
             }
             closedir($handle);
             sort($subFiles);
             $files = array_merge($files, $subFiles);
             foreach ($subdirs as $subdir) {
-                $files = array_merge($files, self::getFiles($subdir, $basepath));
+                $files = array_merge($files, self::getFiles($subdir, $basepath, $fileType));
             }
         }
         
         return $files;
     }
     
+    public static function getExtention($filename){
+        return pathinfo($filename, PATHINFO_EXTENSION);
+    }
+    
+    
     public static function countItemsAndStringLengths($filename) {
-        $translations = include($filename);
+        
+        switch (self::getExtention($filename)){
+            case('php'):
+                $translations = include($filename);
+                break;
+            case('json'):
+                $translations = json_decode(file_get_contents($filename), true);
+        }
+        
         
         return self::countItemsAndStringLengthsInArray($translations);
     }
