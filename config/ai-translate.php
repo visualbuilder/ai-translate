@@ -17,6 +17,14 @@ return [
         'vendor/visualbuilder/email-templates/resources/lang'
     ],
     
+    //Pricing data from here: https://openai.com/pricing#language-models
+    'ai-models' => [
+        'gpt-3.5-turbo'     => ['max_tokens' => 4096, 'input_price' => 0.0015, 'output_price' => 0.002],
+        'gpt-3.5-turbo-16k' => ['max_tokens' => 16384, 'input_price' => 0.003, 'output_price' => 0.004],
+        'gpt-4'             => ['max_tokens' => 8192, 'input_price' => 0.03, 'output_price' => 0.06],
+        'gpt-4-32k'         => ['max_tokens' => 32768, 'input_price' => 0.06, 'output_price' => 0.12],
+    ],
+    
     'target_locales' => [
         'ar'    => 'Arabic',
         'de'    => 'German',
@@ -27,14 +35,7 @@ return [
         'uk'    => 'Ukrainian',
     ],
     
-    //Pricing data from here: https://openai.com/pricing#language-models
-    'ai-models' => [
-        'gpt-3.5-turbo'     => ['max_tokens' => 4096, 'input_price' => 0.0015, 'output_price' => 0.002],
-        'gpt-3.5-turbo-16k' => ['max_tokens' => 16384, 'input_price' => 0.003, 'output_price' => 0.004],
-        'gpt-4'             => ['max_tokens' => 8192, 'input_price' => 0.03, 'output_price' => 0.06],
-        'gpt-4-32k'         => ['max_tokens' => 32768, 'input_price' => 0.06, 'output_price' => 0.12],
-    ],
-    
+    //Copy anything from here to target_locales above to enable translation of those longuages.
     'known_locales' => [
         'af'    => 'Afrikaans',
         'ar'    => 'Arabic',

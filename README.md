@@ -4,6 +4,8 @@
 [![Total Downloads](https://img.shields.io/packagist/dt/visualbuilder/ai-translate.svg?style=flat-square)](https://packagist.org/packages/visualbuilder/ai-translate)
 ![GitHub Actions](https://github.com/visualbuilder/ai-translate/actions/workflows/main.yml/badge.svg)
 
+![Example](./screenshot.png)
+
  - Just set a list of languages that you would like your site translating to and leave it to GPT.
  - Can use GPT-3.5-turbo or GPT-4
  - Estimates cost before running
