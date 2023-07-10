@@ -15,6 +15,15 @@
  - Handles both PHP and JSON files
  - Model translations coming soon
 
+## Requirements
+
+PHP 8.1 Is the minimum for the OpenAI Wrapper.
+
+Tested with Laravel ^9.45 and 10.x
+
+Filament is not required (but can add to their already awesome set of translations.)  
+
+
 ## Installation
 
 Download the package via composer:
@@ -46,6 +55,8 @@ Currently handles `.json` and `.php` translation files.
 Attribute tokens should remain unchanged.  This was a challenge as GPT-3.5 refused to ignore :attribute and always translated it even when told explicity to ignore it.
 To solve this all tokens are replaced with *** before translation and added back in after translation ensuring continuity.
 
+![php artisan vb:ai:translate --help](./media/help.png)
+
 To run the script:-
 
 ```bash
@@ -55,6 +66,8 @@ php artisan vb:ai:translate
 The script will scan all the source_directories for translation files and then provide an estimate of the cost to translate into the required languages for each GPT Model.
 
 If you're happy to continue, select the model you wish to use and each source file will be translated.
+
+![php artisan vb:ai:translate](./media/screenshot.png)
 
 If the target file exists, only new keys not in the target will be translated. Unless you use the --force option which will overwrite any existing translations.
 

@@ -14,6 +14,7 @@ return [
     //But do not include it here. These are the parent directories.
     'source_directories' => [
         'lang',
+        'resources/lang',
         //Developers can point to their packages to have them translated
         //Either in vendor or where ever they happen to be
         'vendor/visualbuilder/email-templates/resources/lang',
