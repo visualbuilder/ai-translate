@@ -23,10 +23,7 @@
     "require-dev": {
         "mockery/mockery": "^1.6",
         "orchestra/testbench": "^8.5",
-        "pestphp/pest": "^2.8.2",
-        "pestphp/pest-plugin-arch": "^2.2.2",
-        "pestphp/pest-plugin-mock": "^2.0.0",
-        "phpstan/phpstan": "^1.10.25"
+        "pestphp/pest": "^2.8.2"
     },
     "autoload": {
         "psr-4": {
