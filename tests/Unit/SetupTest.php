@@ -28,11 +28,11 @@ it('registers console commands', function () {
 
 
 it('Can install config', function () {
-    
+
     //First run should go straight through
     $this->artisan('vb:ai:install --force')->assertExitCode(0);
-    
+
     //Second run should prompt user to overwrite file
-    $this->artisan('vb:ai:install')->expectsConfirmation('config/ai-translate.php file already exists. Do you want to overwrite it?','no')
+    $this->artisan('vb:ai:install')->expectsConfirmation('config/ai-translate.php file already exists. Do you want to overwrite it?', 'no')
         ->assertExitCode(1);
 });

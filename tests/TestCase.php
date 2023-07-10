@@ -7,7 +7,8 @@ use Visualbuilder\AiTranslate\AiTranslateServiceProvider;
 
 class TestCase extends Orchestra
 {
-    protected function getPackageProviders($app) {
+    protected function getPackageProviders($app)
+    {
         return [
             AiTranslateServiceProvider::class,
         ];

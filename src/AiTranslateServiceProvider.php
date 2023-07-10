@@ -19,7 +19,7 @@ class AiTranslateServiceProvider extends ServiceProvider
                              ], 'config');
         }
     }
-    
+
     /**
      * Register the application services.
      */
@@ -27,11 +27,12 @@ class AiTranslateServiceProvider extends ServiceProvider
     {
         // Automatically apply the package configuration
         $this->mergeConfigFrom(__DIR__.'/../config/ai-translate.php', 'ai-translate');
-        
+
         $this->registerConsoleCommands();
     }
-    
-    private function registerConsoleCommands() {
+
+    private function registerConsoleCommands()
+    {
         $this->commands([
                             InstallCommand::class,
                             TranslateStrings::class,
