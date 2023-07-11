@@ -50,6 +50,7 @@ class OpenAiHelper
         $lines = array_map(function ($line) use (&$placeholders) {
             return preg_replace_callback('/:(\w+)/', function ($matches) use (&$placeholders) {
                 $placeholders[] = $matches[0]; // Store the placeholders
+
                 return '***'; // Replace them with ***
             }, $line);
         }, $lines);
@@ -97,7 +98,7 @@ class OpenAiHelper
         $translatedStrings = explode("\n", trim($translatedContent));
 
         // Remove the line numbers from the translated strings
-        $translatedStrings = array_map(function ($s) { return preg_replace('/^\d+\.\s/', '', $s); },$translatedStrings);
+        $translatedStrings = array_map(function ($s) { return preg_replace('/^\d+\.\s/', '', $s); }, $translatedStrings);
 
 
 

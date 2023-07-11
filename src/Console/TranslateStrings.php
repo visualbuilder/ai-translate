@@ -85,7 +85,7 @@ class TranslateStrings extends Command
 
         $this->files = array_merge($jsonFiles, $phpFiles);
     }
-    
+
     /**
      * Chunk source and setup target
      * @return void
@@ -395,14 +395,17 @@ class TranslateStrings extends Command
         }
         $this->handleRetryFailure($retryCount, $targetFile);
     }
-    private function ensureArray($var, $name) {
-        if (!is_array($var)) {
+
+    private function ensureArray($var, $name)
+    {
+        if (! is_array($var)) {
             $this->error("{$name} is not an array.");
             Log::error("{$name} is not an array.", ['content' => $var]);
+
             throw new \Exception("{$name} is not an array.");
         }
     }
-    
+
     public function appendResponse($filename, $translatedChunk)
     {
         if(! count($translatedChunk)) {
@@ -413,10 +416,10 @@ class TranslateStrings extends Command
 
         // Undot the translated chunk
         $undottedTranslatedChunk = Arr::undot($translatedChunk);
-        
-        $this->ensureArray($existingContent,'existingContent: '.$filename);
-        $this->ensureArray($undottedTranslatedChunk,'undottedTranslatedChunk: ');
-        
+
+        $this->ensureArray($existingContent, 'existingContent: '.$filename);
+        $this->ensureArray($undottedTranslatedChunk, 'undottedTranslatedChunk: ');
+
         // Merge new translations with existing content
         $newContent = array_merge($existingContent, $undottedTranslatedChunk);
 
@@ -425,6 +428,7 @@ class TranslateStrings extends Command
         switch (FileHelper::getExtension($filename)) {
             case('php'):
                 $output = "<?php\n\n".$comment."\nreturn ".VarExporter::export($newContent).";\n";
+
                 break;
             case('json'):
                 $output = json_encode($newContent, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
