@@ -48,6 +48,10 @@ return [
     // If your translations are lots of short strings, this number could be much higher.
     'max_lines_per_request' => 40,
     
+    //If Chat GPT throws an error, how many times should we gracefully retry with exponential backoff
+    //This is useful for timeout errors.
+    'max_retries'=>5,
+    
     //Copy any required from here to target_locales above to enable translation of those longuages.
     'known_locales' => [
         'af'    => 'Afrikaans',

@@ -50,7 +50,6 @@ class OpenAiHelper
         $lines = array_map(function ($line) use (&$placeholders) {
             return preg_replace_callback('/:(\w+)/', function ($matches) use (&$placeholders) {
                 $placeholders[] = $matches[0]; // Store the placeholders
-
                 return '***'; // Replace them with ***
             }, $line);
         }, $lines);
@@ -58,7 +57,7 @@ class OpenAiHelper
         $placeholdersUsed = count($placeholders);
 
         // Add line numbers to each string
-        $lines = array_map(function ($k, $v) { return ($k + 1) . ". {$v}"; }, array_keys($lines), $lines);
+        $lines = self::addLineNumbersToArrayofStrings($lines);
 
         $linesString = implode("\n", $lines);
 
@@ -67,9 +66,9 @@ class OpenAiHelper
 
         // Get the total tokens from all the strings in the chunk
         $totalTokens = OpenAiHelper::estimateTokensFromString($prompt.$linesString);
-        $command->comment("Request tokens: $totalTokens");
+        $command->comment("Tokens: $totalTokens");
         $command->comment("Request: $prompt");
-        $command->warn('Source Lines');
+        $command->warn('Source Lines: ');
         self::displayArrayInNumberedLines($originalLines, $command);
 
         $response = OpenAI::chat()->create([
@@ -98,7 +97,7 @@ class OpenAiHelper
         $translatedStrings = explode("\n", trim($translatedContent));
 
         // Remove the line numbers from the translated strings
-        $translatedStrings = array_map(function ($s) { return preg_replace('/^\d+\.\s/', '', $s); }, $translatedStrings);
+        $translatedStrings = array_map(function ($s) { return preg_replace('/^\d+\.\s/', '', $s); },$translatedStrings);
 
 
 
@@ -109,20 +108,14 @@ class OpenAiHelper
             }, $line);
         }, $translatedStrings);
 
-        $translatedChunk = [];
         // Combine the original keys with the translated strings
         if (count(array_keys($chunk)) === count($translatedStrings)) {
             $translatedChunk = array_combine(array_keys($chunk), $translatedStrings);
         } else {
             // Handle situation when the translation result doesn't match with the original number of keys
-            $command->error("Mismatch in translation keys and translated strings for chunk. Keys: " . count(array_keys($chunk)) . " Translated Strings: " . count($translatedStrings));
-            $command->newLine();
-
-            // assign untranslated lines to their original value.
-            // Actually this is not useful.  Better not to exist
-            //            foreach (array_keys($chunk) as $i => $key) {
-            //                $translatedChunk[$key] = $translatedStrings[$i] ?? $chunk[$key];
-            //            }
+            // Sometimes some data is lost.
+            // Exceptions will trigger a retry upto max_retries.
+            throw new \Exception("Mismatch in source keys and translation. Keys: " . count(array_keys($chunk)) . " Translated Strings: " . count($translatedStrings));
         }
 
         if($placeholdersUsed > 0) {

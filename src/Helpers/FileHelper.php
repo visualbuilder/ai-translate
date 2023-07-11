@@ -90,7 +90,7 @@ class FileHelper
         return $files;
     }
 
-    public static function getExtention($filename)
+    public static function getExtension($filename)
     {
         return pathinfo($filename, PATHINFO_EXTENSION);
     }
@@ -98,7 +98,7 @@ class FileHelper
     public static function countItemsAndStringLengths($filename)
     {
 
-        switch (self::getExtention($filename)) {
+        switch (self::getExtension($filename)) {
             case('php'):
                 $translations = include($filename);
 

@@ -4,6 +4,7 @@ namespace Visualbuilder\AiTranslate\Console;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\VarExporter\VarExporter;
 use Visualbuilder\AiTranslate\Helpers\FileHelper;
 use Visualbuilder\AiTranslate\Helpers\OpenAiHelper;
@@ -68,6 +69,7 @@ class TranslateStrings extends Command
     {
         $this->sourceLocale = config('ai-translate.source-locale');
         $this->overwrite = (bool) $this->option('force');
+        $this->maxRetries = config('ai-translate.max_retries');
         $this->findSourceFiles();
         $this->estimateCostAndSelectModel();
     }
@@ -83,7 +85,11 @@ class TranslateStrings extends Command
 
         $this->files = array_merge($jsonFiles, $phpFiles);
     }
-
+    
+    /**
+     * Chunk source and setup target
+     * @return void
+     */
     private function translateFiles()
     {
         foreach ($this->files as $sourceFile) {
@@ -223,7 +229,7 @@ class TranslateStrings extends Command
         if(! file_exists($file)) {
             return [];
         }
-        switch (FileHelper::getExtention($file)) {
+        switch (FileHelper::getExtension($file)) {
             case('php'):
                 return include($file);
             case('json'):
@@ -307,7 +313,7 @@ class TranslateStrings extends Command
     public function createCheckOrEmptyTargetFile($file, $locale)
     {
         // Replace source locale with target locale in the path
-        switch (FileHelper::getExtention($file)) {
+        switch (FileHelper::getExtension($file)) {
             case('php'):
                 //php files are in their own locale dir
                 $newFile = str_replace('/'.$this->sourceLocale.'/', '/'.$locale.'/', $file);
@@ -329,7 +335,7 @@ class TranslateStrings extends Command
             mkdir($directory, 0755, true);
         }
 
-        switch (FileHelper::getExtention($file)) {
+        switch (FileHelper::getExtension($file)) {
             case('php'):
                 $comment = "/**\n * Auto Translated by visualbuilder/ai-translate on ".date("d/m/Y")."\n */";
                 file_put_contents($newFile, "<?php\n\n".$comment."\n\nreturn [\n\n];\n");
@@ -389,7 +395,14 @@ class TranslateStrings extends Command
         }
         $this->handleRetryFailure($retryCount, $targetFile);
     }
-
+    private function ensureArray($var, $name) {
+        if (!is_array($var)) {
+            $this->error("{$name} is not an array.");
+            Log::error("{$name} is not an array.", ['content' => $var]);
+            throw new \Exception("{$name} is not an array.");
+        }
+    }
+    
     public function appendResponse($filename, $translatedChunk)
     {
         if(! count($translatedChunk)) {
@@ -400,16 +413,19 @@ class TranslateStrings extends Command
 
         // Undot the translated chunk
         $undottedTranslatedChunk = Arr::undot($translatedChunk);
-
+        
+        $this->ensureArray($existingContent,'existingContent: '.$filename);
+        $this->ensureArray($undottedTranslatedChunk,'undottedTranslatedChunk: ');
+        
         // Merge new translations with existing content
         $newContent = array_merge($existingContent, $undottedTranslatedChunk);
 
         $comment = "/**\n * Auto Translated by visualbuilder/ai-translate on ".date("d/m/Y")."\n */";
 
-        switch (FileHelper::getExtention($filename)) {
+        switch (FileHelper::getExtension($filename)) {
             case('php'):
                 $output = "<?php\n\n".$comment."\nreturn ".VarExporter::export($newContent).";\n";
-                // no break
+                break;
             case('json'):
                 $output = json_encode($newContent, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
         }
@@ -420,6 +436,7 @@ class TranslateStrings extends Command
     private function handleRetry(&$retryCount, $exception, $targetFile)
     {
         $retryCount++;
+        $this->newLine();
         $this->error('An error occurred while processing the file: '.$targetFile);
         $this->error('Error message: '.$exception->getMessage());
         $this->info("Retrying $retryCount / $this->maxRetries Times in ".pow(2, $retryCount).' seconds');
