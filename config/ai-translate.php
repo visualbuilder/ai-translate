@@ -21,6 +21,7 @@ return [
         'resources/lang/vendor/ekoukltd/laraconsent'
     ],
     
+    //Put the languages you need in here
     'target_locales'        => [
         'ar'    => 'Arabic',
         'de'    => 'German',

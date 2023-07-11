@@ -15,6 +15,36 @@
  - Handles both PHP and JSON files
  - Model translations coming soon
 
+## Examples
+Examples:-
+From English:
+- 'accepted' => 'The :attribute must be accepted.',
+- 'accepted_if' => 'The :attribute must be accepted when :other is :value.',
+
+To Arabic:-
+- 'accepted' => 'يجب قبول الـ :attribute',
+- 'accepted_if' => 'يجب قبول الـ :attribute عندما يكون الـ :other هو :value',
+
+To Ukrainian:-
+- 'accepted' => ':attribute має бути прийнятий.',
+- 'accepted_if' => ':attribute має бути прийнятий, коли :other є :value.',
+
+To German:-
+- 'accepted' => 'Die :attribute müssen akzeptiert werden.',
+- 'accepted_if' => 'Die :attribute müssen akzeptiert werden, wenn :other :value ist.',
+
+To Spanish:-
+- 'accepted' => 'El :attribute debe ser aceptado.',
+- 'accepted_if' => 'El :attribute debe ser aceptado cuando :other es :value.',
+
+To Chinese Simplified:-
+- 'accepted' => ':attribute必须被接受。',
+- 'accepted_if' => '当:attribute是:other时，:value必须被接受。',
+
+To Swedish:-
+- 'accepted' => ':attribute måste accepteras.',
+- 'accepted_if' => ':attribute måste accepteras när :other är :value.',
+
 ## Requirements
 
 PHP 8.1 Is the minimum for the OpenAI Wrapper.
