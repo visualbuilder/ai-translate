@@ -6,6 +6,54 @@ use OpenAI\Laravel\Facades\OpenAI;
 
 class OpenAiHelper
 {
+    
+    
+    /**
+     * Translate a single string from source to target language.
+     * Placeholders represented by '##...##' are not translated.
+     */
+    public static function translate($text, $targetLanguage, $model)
+    {
+        // Identify placeholders and replace them with *** to prevent translation
+        $placeholders = [];
+        $text = preg_replace_callback('/##(.*?)##/', function ($matches) use (&$placeholders) {
+            $placeholder = $matches[0];
+            $placeholders[] = $placeholder;
+            return '<span class="notranslate">PLACEHOLDER</span>';
+        }, $text);
+        
+        // Prepare the translation prompt
+        $prompt = "Translate the following text into $targetLanguage, DO not remove or translate any HTML tags:\n$text";
+        
+        // Call the OpenAI API to perform the translation
+        $response = OpenAI::chat()->create([
+                                               'model' => $model,
+                                               'messages' => [
+                                                   [
+                                                       'role' => 'system',
+                                                       'content' => $prompt,
+                                                   ],
+                                                   [
+                                                       'role' => 'user',
+                                                       'content' => '',
+                                                   ],
+                                               ],
+                                               'max_tokens' => strlen($prompt) * 2,
+                                               'temperature' => 0.1,
+                                           ]);
+        
+        // Extract the translated content from the response
+        $translatedContent = trim($response->choices[0]->message->content);
+        
+        // Replace *** back with placeholders in the translated text
+        $replacedContent = preg_replace_callback('/<span class="notranslate">(.*?)<\/span>/', function ($matches) use (&$placeholders) {
+            return array_shift($placeholders);
+        }, $translatedContent);
+        
+        return ['source'=>$text,'response'=>$translatedContent,'tokens_replaced'=>$replacedContent];
+    }
+    
+    
     /**
      * Replace tokens with *** and save the original values
      * Format the submitted lines with line numbers
@@ -24,8 +72,6 @@ class OpenAiHelper
      *
      * TODO Capture the before and after to an array so each chunked result can be tablulated as we go in the console.
      *
-     * TODO Right to Left Arabic sometimes switches the attribute colon to the end of the string not the start.
-     * Need to resolve.
      *
      * @param $command
      * @param $chunk
@@ -130,7 +176,8 @@ class OpenAiHelper
             'usage' => $response->usage,
         ];
     }
-
+    
+    
     public static function addLineNumbersToArrayofStrings($lines)
     {
         return array_map(function ($k, $v) { return ($k + 1) . ". {$v}"; }, array_keys($lines), $lines);

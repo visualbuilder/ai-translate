@@ -4,6 +4,14 @@ namespace Visualbuilder\AiTranslate\Helpers;
 
 class FileHelper
 {
+    
+    public static function getFileList($sourceLocale)
+    {
+        $jsonFiles = self::getJsonSourceFileList($sourceLocale);
+        $phpFiles = self::getLanguageFileList($sourceLocale);
+        return array_merge($jsonFiles,$phpFiles);
+    }
+    
     public static function getJsonSourceFileList($sourceLocale)
     {
         $directories = config('ai-translate.source_directories');

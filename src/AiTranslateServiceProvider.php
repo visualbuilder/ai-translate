@@ -4,6 +4,7 @@ namespace Visualbuilder\AiTranslate;
 
 use Illuminate\Support\ServiceProvider;
 use Visualbuilder\AiTranslate\Console\InstallCommand;
+use Visualbuilder\AiTranslate\Console\TranslateModel;
 use Visualbuilder\AiTranslate\Console\TranslateStrings;
 
 class AiTranslateServiceProvider extends ServiceProvider
@@ -36,6 +37,7 @@ class AiTranslateServiceProvider extends ServiceProvider
         $this->commands([
                             InstallCommand::class,
                             TranslateStrings::class,
+                            TranslateModel::class,
                         ]);
     }
 }

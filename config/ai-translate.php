@@ -7,12 +7,12 @@ return [
     
     //What is the source language
     //Please provide just one input locale
-    'source-locale'      => 'en',
+    'source-locale'         => 'en_GB',
     
     //Which parent directories should be translated?
     //The locale above should be present as a sub-directory in each of these locations.
     //But do not include it here. These are the parent directories.
-    'source_directories' => [
+    'source_directories'    => [
         'lang',
         'resources/lang',
         //Developers can point to their packages to have them translated
@@ -140,6 +140,23 @@ return [
         'el' => 'Greek',
         'yi' => 'Yiddish',
         'ne' => 'Nepali',
+    ],
+    
+    'models_with_language_keys' => [
+        [
+            'model'                        => '\\Visualbuilder\\EmailTemplates\\Models\\EmailTemplate',
+            'key'                          => 'key',
+            'locale_key'                   => 'language',
+            'translatable_attributes'      => [
+                'subject',
+                'title',
+                'preheader'
+            ],
+            'translatable_html_attributes' => [
+                'content'
+            ]
+        ]
     ]
+
 
 ];
